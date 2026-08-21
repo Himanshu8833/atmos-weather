@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATMOS LIVE | Global Weather Platform</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2332d0ee'/%3E%3Cstop offset='100%25' stop-color='%2338ef7d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' rx='10' fill='%231e2229' stroke='rgba(255,255,255,0.1)'/%3E%3Cpath d='M21 7L11 22h8l-2 11 12-16h-9l3-10z' fill='url(%23grad)'/%3E%3C/svg%3E">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #121417;
+            --panel-bg: rgba(30, 34, 41, 0.85);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent-blue: #32d0ee;
+            --accent-green: #38ef7d;
+            --accent-orange: #ff9800;
+            --text-white: #ffffff;
+            --text-grey: #cbd5e1;
+            --panel-border: 1px solid rgba(255, 255, 255, 0.12);
+            --input-border: 1px solid rgba(255, 255, 255, 0.2);
+            --badge-bg: rgba(50, 208, 238, 0.18);
+            --progress-bg: rgba(255, 255, 255, 0.15);
+            --weather-bg-gradient: radial-gradient(circle at top right, #1e293b, #0f172a);
+        }
+
+        body.weather-clear {
+            --weather-bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --accent-blue: #f59e0b;
+        }
+
+        body.weather-rain {
+            --weather-bg-gradient: linear-gradient(135deg, #1f2937, #111827, #030712);
+            --accent-blue: #38bdf8;
+        }
+
+        body.weather-clouds {
+            --weather-bg-gradient: linear-gradient(135deg, #334155, #1e293b, #0f172a);
+            --accent-blue: #94a3b8;
+        }
+
+        body.weather-thunder {
+            --weather-bg-gradient: linear-gradient(135deg, #311042, #1c0a2a, #0b0214);
+            --accent-blue: #c084fc;
+        }
+
+        body.weather-snow {
+            --weather-bg-gradient: linear-gradient(135deg, #1e3a5f, #0f1e33, #08111d);
+            --accent-blue: #7dd3fc;
+        }
+
+        body.light-theme {
+            --bg-color: #f8fafc;
+            --panel-bg: rgba(255, 255, 255, 0.88);
+            --card-bg: rgba(0, 0, 0, 0.04);
+            --accent-blue: #0284c7;
+            --accent-green: #16a34a;
+            --accent-orange: #ea580c;
+            --text-white: #0f172a;
+            --text-grey: #475569;
+            --panel-border: 1px solid rgba(0, 0, 0, 0.08);
+            --input-border: 1px solid rgba(0, 0, 0, 0.15);
+            --badge-bg: rgba(2, 132, 199, 0.12);
+            --progress-bg: rgba(0, 0, 0, 0.08);
+            --weather-bg-gradient: linear-gradient(135deg, #e2e8f0, #cbd5e1, #94a3b8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background 0.5s ease, background-color 0.4s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--weather-bg-gradient);
+            background-attachment: fixed;
+            background-size: cover;
+            color: var(--text-white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(50, 208, 238, 0.15);
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-logo-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .brand-text-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-badge {
+            font-size: 10px;
+            background: rgba(56, 239, 125, 0.15);
+            color: var(--accent-green);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            border: 1px solid rgba(56, 239, 125, 0.3);
+        }
+
+        .header-clock {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--badge-bg);
+            border: 1px solid rgba(50, 208, 238, 0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-clock .clock-date {
+            color: var(--text-white);
+        }
+
+        .header-clock .clock-dot {
+            color: var(--accent-blue);
+            font-size: 10px;
+        }
+
+        .header-clock .clock-time {
+            color: var(--accent-blue);
+            font-family: 'Consolas', monospace;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-box input {
+            background: var(--panel-bg);
+            border: var(--input-border);
+            color: var(--text-white);
+            padding: 8px 14px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            width: 200px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-box button {
+            background: var(--accent-blue);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #ffffff;
+            transition: 0.2s;
+        }
+
+        .action-btn {
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            color: var(--text-white);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-btn:hover {
+            background: var(--badge-bg);
+        }
+
+        .user-profile-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .logout-btn-mini {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+
+        .recent-searches-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: -10px;
+            font-size: 12px;
+            color: var(--text-grey);
+        }
+
+        .recent-chips-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 12px;
+            color: var(--text-white);
+            cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        .chip:hover {
+            background: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .weather-hero {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: var(--panel-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(16px);
+        }
+
+        .location-info h2 {
+            font-size: 24px;
+            color: var(--text-white);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .location-hierarchy {
+            font-size: 13px;
+            color: var(--text-grey);
+            margin-bottom: 6px;
+        }
+
+        .selected-date-badge {
+            display: inline-block;
+            background: var(--badge-bg);
+            color: var(--accent-blue);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .temp-display {
+            font-size: 64px;
+            font-weight: bold;
+            line-height: 1;
+            margin-top: 10px;
+        }
+
+        .temp-display sup {
+            font-size: 36px;
+            vertical-align: super;
+        }
+
+        .weather-desc {
+            color: var(--text-grey);
+            font-size: 14px;
+            text-transform: capitalize;
+            margin-top: 10px;
+        }
+
+        .hero-graphics {
+            text-align: center;
+        }
+
+        .hero-graphics img {
+            width: 90px;
+            height: 90px;
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
+        }
+
+        .hero-min-max {
+            font-size: 13px;
+            color: var(--text-grey);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .hourly-section {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: var(--panel-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(16px);
+        }
+
+        .section-header-title {
+            font-size: 14px;
+            color: var(--text-grey);
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hourly-scroll {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+        }
+
+        .hourly-scroll::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .hourly-scroll::-webkit-scrollbar-thumb {
+            background: var(--progress-bg);
+            border-radius: 4px;
+        }
+
+        .hourly-card {
+            background: var(--card-bg);
+            border: var(--panel-border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            min-width: 80px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            backdrop-filter: blur(8px);
+        }
+
+        .hourly-card .hour-time {
+            font-size: 12px;
+            color: var(--text-grey);
+        }
+
+        .hourly-card img {
+            width: 32px;
+            height: 32px;
+        }
+
+        .hourly-card .hour-temp {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .hourly-card .hour-rain {
+            font-size: 10px;
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        @media (max-width: 900px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            background-color: var(--panel-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 130px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(16px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 12px;
+            color: var(--text-grey);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .card-main {
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .metric-unit {
+            font-size: 13px;
+            color: var(--text-grey);
+            font-weight: normal;
+        }
+
+        .card-footer {
+            font-size: 11px;
+            color: var(--text-grey);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: var(--progress-bg);
+            border-radius: 3px;
+            margin-top: 6px;
+            position: relative;
+        }
+
+        .rain-card .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-blue) 0%, #0051ff 100%);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .uv-card .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #38ef7d 0%, #ffd700 50%, #ff4500 100%);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .rain-status-badge {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .rain-yes {
+            background: rgba(255, 100, 100, 0.25);
+            color: #ef4444;
+        }
+
+        .rain-no {
+            background: rgba(56, 239, 125, 0.25);
+            color: var(--accent-green);
+        }
+
+        .good-label {
+            background-color: rgba(56, 239, 125, 0.25);
+            color: var(--accent-green);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .forecast-section {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: var(--panel-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(16px);
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 12px;
+        }
+
+        .forecast-card {
+            background: var(--card-bg);
+            border: var(--panel-border);
+            border-radius: 14px;
+            padding: 12px 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.2s transform, 0.2s border-color;
+            backdrop-filter: blur(8px);
+        }
+
+        .forecast-card:hover, .forecast-card.active-day {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            background: var(--badge-bg);
+        }
+
+        .forecast-card .day-name {
+            font-size: 13px;
+            color: var(--text-grey);
+            font-weight: 600;
+        }
+
+        .forecast-card .day-date {
+            font-size: 11px;
+            color: var(--text-grey);
+            opacity: 0.8;
+        }
+
+        .forecast-card img {
+            width: 42px;
+            height: 42px;
+        }
+
+        .forecast-card .forecast-temp {
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .forecast-card .rain-prob {
+            font-size: 11px;
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+
+        .phone-sms-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1e293b;
+            border: 1px solid #38ef7d;
+            border-radius: 14px;
+            padding: 14px 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: slideDown 0.4s ease forwards;
+            max-width: 320px;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .phone-sms-toast .sms-icon {
+            font-size: 24px;
+        }
+
+        .phone-sms-toast .sms-body h4 {
+            font-size: 13px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .phone-sms-toast .sms-body p {
+            font-size: 12px;
+            color: var(--accent-green);
+            margin-top: 2px;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .auth-card {
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            border-radius: 20px;
+            padding: 35px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            backdrop-filter: blur(20px);
+        }
+
+        .auth-header {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--card-bg);
+            border: var(--panel-border);
+            border-radius: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .auth-logo svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .auth-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-header p {
+            font-size: 12px;
+            color: var(--text-grey);
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 4px;
+            border: var(--panel-border);
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-grey);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .auth-tab.active {
+            background: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .auth-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .auth-input-group label {
+            font-size: 12px;
+            color: var(--text-grey);
+            font-weight: 500;
+        }
+
+        .auth-input-group input {
+            background: var(--card-bg);
+            border: var(--input-border);
+            color: var(--text-white);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .auth-input-group input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .otp-input-wrapper {
+            display: flex;
+            gap: 8px;
+        }
+
+        .otp-input-wrapper input {
+            flex: 1;
+        }
+
+        .send-otp-btn {
+            background: var(--accent-blue);
+            border: none;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 0 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .send-otp-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .auth-submit-btn {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            border: none;
+            color: #121417;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: 0.2s;
+        }
+
+        .auth-submit-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sms-toast" class="phone-sms-toast" style="display: none;">
+    <div class="sms-icon">💬</div>
+    <div class="sms-body">
+        <h4>Messages • Just now</h4>
+        <p id="sms-toast-content">Your ATMOS verification code is <b>0000</b>.</p>
+    </div>
+</div>
+
+<div id="auth-modal" class="auth-overlay" style="display: none;">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <svg viewBox="0 0 40 40">
+                    <defs>
+                        <linearGradient id="authLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#32d0ee"/>
+                            <stop offset="100%" stop-color="#38ef7d"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M21 7L11 22h8l-2 11 12-16h-9l3-10z" fill="url(#authLogoGrad)"/>
+                </svg>
+            </div>
+            <h2>ATMOS ACCESS</h2>
+            <p id="auth-subtitle">Verify your phone/email to continue</p>
+        </div>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="tab-otp">📲 Phone / Email OTP</div>
+            <div class="auth-tab" id="tab-password">🔑 Password Login</div>
+        </div>
+
+        <form id="otp-form" class="auth-form">
+            <div class="auth-input-group">
+                <label>Mobile Number (or Email)</label>
+                <div class="otp-input-wrapper">
+                    <input type="text" id="otp-phone-input" placeholder="e.g. 9876543210" required />
+                    <button type="button" id="send-otp-btn" class="send-otp-btn">Send OTP</button>
+                </div>
+            </div>
+
+            <div class="auth-input-group" id="otp-code-group" style="display: none;">
+                <label>Enter 4-Digit OTP Code</label>
+                <input type="text" id="otp-code-input" placeholder="••••" maxlength="4" required />
+            </div>
+
+            <button type="submit" id="otp-submit-btn" class="auth-submit-btn" style="display: none;">Verify & Unlock</button>
+        </form>
+
+        <form id="password-form" class="auth-form" style="display: none;">
+            <div class="auth-input-group">
+                <label>Username / Email</label>
+                <input type="text" id="pass-identifier-input" placeholder="admin or user@mail.com" required />
+            </div>
+            <div class="auth-input-group">
+                <label>Password</label>
+                <input type="password" id="pass-password-input" placeholder="••••••••" required />
+            </div>
+            <button type="submit" class="auth-submit-btn">Login</button>
+        </form>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <div class="header">
+        <div class="header-title-box">
+            <div class="header-brand">
+                <div class="brand-logo-icon">
+                    <svg viewBox="0 0 40 40">
+                        <defs>
+                            <linearGradient id="brandLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#32d0ee"/>
+                                <stop offset="100%" stop-color="#38ef7d"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M21 7L11 22h8l-2 11 12-16h-9l3-10z" fill="url(#brandLogoGrad)"/>
+                    </svg>
+                </div>
+                <div class="brand-text-wrap">
+                    <h1 class="brand-title">ATMOS LIVE</h1>
+                    <span class="brand-badge">PRO</span>
+                </div>
+            </div>
+            <div id="live-clock" class="header-clock">Loading live time...</div>
+        </div>
+        <div class="header-actions">
+            <div class="search-box">
+                <input type="text" id="city-input" placeholder="Search City, District..." />
+                <button id="search-btn">Search</button>
+            </div>
+            <button id="geo-btn" class="action-btn" title="Use current location">📍</button>
+            <button id="unit-toggle-btn" class="action-btn" title="Switch °C/°F">°F</button>
+            <button id="theme-toggle-btn" class="action-btn" title="Toggle Dark/Light Mode">🌙</button>
+            
+            <div id="user-auth-badge" class="user-profile-badge">
+                <span id="user-display-name">Guest</span>
+                <button id="logout-btn" class="logout-btn-mini" title="Sign Out">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="recent-searches-box">
+        <span>Recent:</span>
+        <div id="recent-chips" class="recent-chips-container"></div>
+    </div>
+
+    <div class="weather-hero">
+        <div class="location-info">
+            <h2 id="place-name">Delhi</h2>
+            <div id="place-hierarchy" class="location-hierarchy">District / State, India</div>
+            <div id="selected-day-badge" class="selected-date-badge">Showing: Today</div>
+            <div class="temp-display"><span id="temperature">--</span><sup id="unit-symbol">°C</sup></div>
+            <div class="weather-desc" id="weather-desc">Loading weather telemetry...</div>
+        </div>
+        <div class="hero-graphics">
+            <img id="weather-icon" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather Icon" />
+            <div class="hero-min-max">Min: <span id="temp-min">--</span>° • Max: <span id="temp-max">--</span>°</div>
+        </div>
+    </div>
+
+    <div class="hourly-section">
+        <div class="section-header-title">
+            <span>24-HOUR HOURLY FORECAST</span>
+            <span style="font-size: 11px; color: var(--accent-blue);">Scroll horizontally ➔</span>
+        </div>
+        <div class="hourly-scroll" id="hourly-container"></div>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="card-header">
+                <h3>FEELS LIKE</h3>
+                <span>🌡️</span>
+            </div>
+            <div class="card-main">
+                <div class="metric-value"><span id="feels-like">--</span><span class="metric-unit">°</span></div>
+            </div>
+            <div class="card-footer" id="feels-status">Normal humidity</div>
+        </div>
+
+        <div class="metric-card rain-card">
+            <div class="card-header">
+                <h3>RAIN CHANCE</h3>
+                <span id="rain-badge" class="rain-status-badge rain-no">No Rain</span>
+            </div>
+            <div class="card-main">
+                <div class="metric-value"><span id="rain-chance">0</span><span class="metric-unit">%</span></div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="rain-bar"></div>
+            </div>
+            <div class="card-footer" style="margin-top: 4px;">Precipitation: <b id="rain-amount" style="color:var(--text-white);">0 mm</b></div>
+        </div>
+
+        <div class="metric-card">
+            <div class="card-header">
+                <h3>WIND & DIRECTION</h3>
+                <span>💨</span>
+            </div>
+            <div class="card-main">
+                <div class="metric-value"><span id="wind-speed">--</span> <span class="metric-unit">km/h</span></div>
+            </div>
+            <div class="card-footer">Direction: <b id="wind-direction" style="color:var(--text-white);">--</b></div>
+        </div>
+
+        <div class="metric-card uv-card">
+            <div class="card-header">
+                <h3>UV INDEX</h3>
+                <span>☀️</span>
+            </div>
+            <div class="card-main">
+                <div class="metric-value"><span id="uv-index">0.0</span> <span class="metric-unit">UV</span></div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="uv-bar"></div>
+            </div>
+            <div class="card-footer" id="uv-risk" style="margin-top: 4px; color: var(--accent-green);">Low Risk</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="card-header">
+                <h3>HUMIDITY</h3>
+                <span>💧</span>
+            </div>
+            <div class="card-main">
+                <div class="metric-value"><span id="humidity-val">--</span><span class="metric-unit">%</span></div>
+            </div>
+            <div class="card-footer">Dew Point: <b id="dew-point" style="color:var(--text-white);">--°C</b></div>
+        </div>
+
+        <div class="metric-card">
+            <div class="card-header">
+                <h3>AIR QUALITY</h3>
+                <div class="good-label" id="aqi-label">--</div>
+            </div>
+            <div class="card-main">
+                <div class="metric-value"><span id="aqi-value">--</span> <span class="metric-unit">PM2.5</span></div>
+            </div>
+            <div class="card-footer" id="aqi-advice">Air quality loading...</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="card-header">
+                <h3>PRESSURE & VISIBILITY</h3>
+                <span>👁️</span>
+            </div>
+            <div class="card-main">
+                <div class="metric-value"><span id="pressure-val">--</span> <span class="metric-unit">hPa</span></div>
+            </div>
+            <div class="card-footer">Visibility: <b id="visibility-val" style="color:var(--text-white);">-- km</b></div>
+        </div>
+
+        <div class="metric-card">
+            <div class="card-header">
+                <h3>SUN SCHEDULE</h3>
+                <span>🌅</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 8px 0; font-size: 13px;">
+                <div>Rise: <b id="sunrise-time" style="color:var(--text-white);">--:--</b></div>
+                <div>Set: <b id="sunset-time" style="color:var(--text-white);">--:--</b></div>
+            </div>
+            <div class="card-footer">Cloud Cover: <b id="cloud-cover" style="color:var(--text-white);">0%</b></div>
+        </div>
+    </div>
+
+    <div class="forecast-section">
+        <div class="section-header-title">
+            <span>7-DAY EXTENDED FORECAST</span>
+            <span style="font-size: 11px; color: var(--accent-blue);">💡 Click any day to view details</span>
+        </div>
+        <div class="forecast-grid" id="forecast-container"></div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
