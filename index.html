@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATMOS LIVE | Global Weather Platform</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2332d0ee'/%3E%3Cstop offset='100%25' stop-color='%2338ef7d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' rx='10' fill='%231e2229' stroke='rgba(255,255,255,0.1)'/%3E%3Cpath d='M21 7L11 22h8l-2 11 12-16h-9l3-10z' fill='url(%23grad)'/%3E%3C/svg%3E">
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         :root {
             --bg-color: #121417;
@@ -616,6 +615,7 @@
             font-weight: bold;
         }
 
+        /* Direct Device Simulated SMS Toast */
         .phone-sms-toast {
             position: fixed;
             top: 20px;
@@ -630,7 +630,7 @@
             gap: 12px;
             z-index: 10000;
             animation: slideDown 0.4s ease forwards;
-            max-width: 320px;
+            max-width: 340px;
         }
 
         @keyframes slideDown {
@@ -654,6 +654,7 @@
             margin-top: 2px;
         }
 
+        /* Clean Login Modal */
         .auth-overlay {
             position: fixed;
             top: 0;
@@ -674,7 +675,7 @@
             border-radius: 20px;
             padding: 35px 30px;
             width: 100%;
-            max-width: 400px;
+            max-width: 380px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
@@ -708,11 +709,12 @@
         }
 
         .auth-header h2 {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
         }
 
         .auth-header p {
@@ -720,41 +722,16 @@
             color: var(--text-grey);
         }
 
-        .auth-tabs {
-            display: flex;
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 4px;
-            border: var(--panel-border);
-        }
-
-        .auth-tab {
-            flex: 1;
-            text-align: center;
-            padding: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-grey);
-            cursor: pointer;
-            border-radius: 8px;
-            transition: 0.2s;
-        }
-
-        .auth-tab.active {
-            background: var(--accent-blue);
-            color: #ffffff;
-        }
-
         .auth-form {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
         .auth-input-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
         }
 
         .auth-input-group label {
@@ -767,7 +744,7 @@
             background: var(--card-bg);
             border: var(--input-border);
             color: var(--text-white);
-            padding: 10px 14px;
+            padding: 11px 14px;
             border-radius: 10px;
             font-size: 14px;
             outline: none;
@@ -812,7 +789,7 @@
             border-radius: 10px;
             font-size: 14px;
             cursor: pointer;
-            margin-top: 6px;
+            margin-top: 4px;
             transition: 0.2s;
         }
 
@@ -823,14 +800,16 @@
 </head>
 <body>
 
+<!-- Device SMS Message Toast Popup -->
 <div id="sms-toast" class="phone-sms-toast" style="display: none;">
     <div class="sms-icon">💬</div>
     <div class="sms-body">
-        <h4>Messages • Just now</h4>
-        <p id="sms-toast-content">Your ATMOS verification code is <b>0000</b>.</p>
+        <h4 id="sms-toast-header">Messages • Just now</h4>
+        <p id="sms-toast-content">Your ATMOS OTP code is <b>0000</b>.</p>
     </div>
 </div>
 
+<!-- Clean Login Modal -->
 <div id="auth-modal" class="auth-overlay" style="display: none;">
     <div class="auth-card">
         <div class="auth-header">
@@ -845,42 +824,27 @@
                     <path d="M21 7L11 22h8l-2 11 12-16h-9l3-10z" fill="url(#authLogoGrad)"/>
                 </svg>
             </div>
-            <h2>ATMOS ACCESS</h2>
-            <p id="auth-subtitle">Verify your phone/email to continue</p>
+            <h2>LOGIN</h2>
+            <p id="auth-subtitle">Enter your mobile number to get an OTP</p>
         </div>
 
-        <div class="auth-tabs">
-            <div class="auth-tab active" id="tab-otp">📲 Phone / Email OTP</div>
-            <div class="auth-tab" id="tab-password">🔑 Password Login</div>
-        </div>
-
+        <!-- Direct Phone Number OTP Login Form -->
         <form id="otp-form" class="auth-form">
             <div class="auth-input-group">
-                <label>Mobile Number (or Email)</label>
+                <label>Mobile Number</label>
                 <div class="otp-input-wrapper">
-                    <input type="text" id="otp-phone-input" placeholder="e.g. 9876543210" required />
+                    <input type="tel" id="otp-phone-input" placeholder="e.g. 9876543210" maxlength="10" required />
                     <button type="button" id="send-otp-btn" class="send-otp-btn">Send OTP</button>
                 </div>
             </div>
 
+            <!-- Automatically Revealed on OTP Send -->
             <div class="auth-input-group" id="otp-code-group" style="display: none;">
-                <label>Enter 4-Digit OTP Code</label>
-                <input type="text" id="otp-code-input" placeholder="••••" maxlength="4" required />
+                <label style="color: var(--accent-blue); font-weight: 600;">Enter 4-Digit OTP</label>
+                <input type="text" id="otp-code-input" placeholder="Enter OTP here" maxlength="4" autocomplete="off" />
             </div>
 
-            <button type="submit" id="otp-submit-btn" class="auth-submit-btn" style="display: none;">Verify & Unlock</button>
-        </form>
-
-        <form id="password-form" class="auth-form" style="display: none;">
-            <div class="auth-input-group">
-                <label>Username / Email</label>
-                <input type="text" id="pass-identifier-input" placeholder="admin or user@mail.com" required />
-            </div>
-            <div class="auth-input-group">
-                <label>Password</label>
-                <input type="password" id="pass-password-input" placeholder="••••••••" required />
-            </div>
-            <button type="submit" class="auth-submit-btn">Login</button>
+            <button type="submit" id="otp-submit-btn" class="auth-submit-btn" style="display: none;">Verify & Login</button>
         </form>
     </div>
 </div>
@@ -1056,6 +1020,6 @@
     </div>
 </div>
 
-<script src="app.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
