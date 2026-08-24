@@ -1,4 +1,3 @@
-const API_KEY = "64528fad1108fb8bbb87f42eac711996";
 const DEFAULT_QUERY = "Delhi";
 
 let currentTempC = 0;
@@ -24,9 +23,7 @@ function applyWeatherTheme(weatherCode) {
 
     if (weatherCode === 0) {
         document.body.classList.add("weather-clear");
-    } else if (weatherCode >= 51 && weatherCode <= 67) {
-        document.body.classList.add("weather-rain");
-    } else if (weatherCode >= 80 && weatherCode <= 82) {
+    } else if ((weatherCode >= 51 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82)) {
         document.body.classList.add("weather-rain");
     } else if (weatherCode >= 95) {
         document.body.classList.add("weather-thunder");
@@ -37,7 +34,6 @@ function applyWeatherTheme(weatherCode) {
     }
 }
 
-// 1. Direct Phone Number OTP Login (Without Servers)
 function setupAuthManager() {
     const authModal = document.getElementById("auth-modal");
     const userDisplayName = document.getElementById("user-display-name");
@@ -56,84 +52,87 @@ function setupAuthManager() {
 
     const loggedUser = JSON.parse(localStorage.getItem("atmos_logged_user"));
     if (!loggedUser) {
-        authModal.style.display = "flex";
+        if (authModal) authModal.style.display = "flex";
     } else {
-        authModal.style.display = "none";
+        if (authModal) authModal.style.display = "none";
         if (userDisplayName) userDisplayName.innerText = `👤 ${loggedUser.name}`;
     }
 
-    sendOtpBtn.addEventListener("click", () => {
-        const phone = otpPhoneInput.value.trim();
-        if (!phone || phone.length < 10) {
-            alert("Please enter a valid 10-digit Mobile Number!");
-            return;
-        }
-
-        generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-
-        // 1. Trigger Direct Device Messaging App without server
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (isMobile) {
-            window.location.href = `sms:${phone}?body=${encodeURIComponent("Your ATMOS Login OTP is " + generatedOtp)}`;
-        }
-
-        // 2. Show native message card directed to that specific number
-        if (smsToast && smsToastContent) {
-            smsToastHeader.innerText = `SMS to +91 ${phone}`;
-            smsToastContent.innerHTML = `Your ATMOS login OTP is <b>${generatedOtp}</b>. Valid for 60s.`;
-            smsToast.style.display = "flex";
-            setTimeout(() => { smsToast.style.display = "none"; }, 9000);
-        }
-
-        // Reveal OTP Input
-        otpCodeGroup.style.display = "flex";
-        otpSubmitBtn.style.display = "block";
-        otpCodeInput.value = "";
-        otpCodeInput.focus();
-
-        let timeLeft = 60;
-        sendOtpBtn.disabled = true;
-        sendOtpBtn.innerText = `${timeLeft}s`;
-
-        clearInterval(otpTimer);
-        otpTimer = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-                clearInterval(otpTimer);
-                sendOtpBtn.disabled = false;
-                sendOtpBtn.innerText = "Resend OTP";
-            } else {
-                sendOtpBtn.innerText = `${timeLeft}s`;
+    if (sendOtpBtn && otpPhoneInput) {
+        sendOtpBtn.addEventListener("click", () => {
+            const phone = otpPhoneInput.value.trim();
+            if (!phone || phone.length < 10) {
+                alert("Please enter a valid 10-digit Mobile Number!");
+                return;
             }
-        }, 1000);
-    });
 
-    otpForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const enteredOtp = otpCodeInput.value.trim();
-        const phone = otpPhoneInput.value.trim();
+            generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
-        if (!enteredOtp) {
-            alert("Please enter the 4-digit OTP code!");
-            return;
-        }
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                window.location.href = `sms:${phone}?body=${encodeURIComponent("Your ATMOS Login OTP is " + generatedOtp)}`;
+            }
 
-        if (enteredOtp === generatedOtp) {
-            const userObj = { name: `+91 ${phone}`, phone: phone };
-            localStorage.setItem("atmos_logged_user", JSON.stringify(userObj));
-            if (userDisplayName) userDisplayName.innerText = `👤 ${userObj.name}`;
-            authModal.style.display = "none";
+            if (smsToast && smsToastContent) {
+                if (smsToastHeader) smsToastHeader.innerText = `SMS to +91 ${phone}`;
+                smsToastContent.innerHTML = `Your ATMOS login OTP is <b>${generatedOtp}</b>. Valid for 60s.`;
+                smsToast.style.display = "flex";
+                setTimeout(() => { smsToast.style.display = "none"; }, 9000);
+            }
+
+            if (otpCodeGroup) otpCodeGroup.style.display = "flex";
+            if (otpSubmitBtn) otpSubmitBtn.style.display = "block";
+            if (otpCodeInput) {
+                otpCodeInput.value = "";
+                otpCodeInput.focus();
+            }
+
+            let timeLeft = 60;
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.innerText = `${timeLeft}s`;
+
             clearInterval(otpTimer);
-            alert("Logged in successfully! Welcome to ATMOS Live.");
-        } else {
-            alert("Incorrect OTP! Please check the code sent to your number.");
-        }
-    });
+            otpTimer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(otpTimer);
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerText = "Resend OTP";
+                } else {
+                    sendOtpBtn.innerText = `${timeLeft}s`;
+                }
+            }, 1000);
+        });
+    }
+
+    if (otpForm) {
+        otpForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const enteredOtp = otpCodeInput ? otpCodeInput.value.trim() : "";
+            const phone = otpPhoneInput ? otpPhoneInput.value.trim() : "";
+
+            if (!enteredOtp) {
+                alert("Please enter the 4-digit OTP code!");
+                return;
+            }
+
+            if (enteredOtp === generatedOtp) {
+                const userObj = { name: `+91 ${phone}`, phone: phone };
+                localStorage.setItem("atmos_logged_user", JSON.stringify(userObj));
+                if (userDisplayName) userDisplayName.innerText = `👤 ${userObj.name}`;
+                if (authModal) authModal.style.display = "none";
+                clearInterval(otpTimer);
+                alert("Logged in successfully! Welcome to ATMOS Live.");
+            } else {
+                alert("Incorrect OTP! Please check the notification message.");
+            }
+        });
+    }
 
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
             localStorage.removeItem("atmos_logged_user");
-            authModal.style.display = "flex";
+            if (authModal) authModal.style.display = "flex";
             if (userDisplayName) userDisplayName.innerText = "Guest";
         });
     }
@@ -187,7 +186,7 @@ function startLiveClock() {
 }
 
 function convertTemp(tempC) {
-    if (tempC === undefined || tempC === null) return "--";
+    if (tempC === undefined || tempC === null || isNaN(tempC)) return "--";
     return isFahrenheit ? Math.round((tempC * 9/5) + 32) : Math.round(tempC);
 }
 
@@ -207,12 +206,6 @@ function getCompassDirection(deg) {
     if (deg === undefined || deg === null) return "NW";
     const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
     return directions[Math.round(deg / 45) % 8];
-}
-
-function formatSunTime(unixTimestamp, timezoneOffset) {
-    if (!unixTimestamp) return "--:--";
-    const date = new Date((unixTimestamp + timezoneOffset) * 1000);
-    return date.toUTCString().slice(17, 22);
 }
 
 function saveSearchToHistory(placeName) {
@@ -262,20 +255,7 @@ async function universalSearch(query) {
             return;
         }
 
-        const owmGeoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${cleanQuery}&limit=1&appid=${API_KEY}`;
-        const owmRes = await fetch(owmGeoUrl);
-        const owmData = await owmRes.json();
-
-        if (owmData && owmData.length > 0) {
-            const owmLoc = owmData[0];
-            const name = owmLoc.name;
-            const hierarchyText = [owmLoc.state, owmLoc.country].filter(Boolean).join(", ");
-            saveSearchToHistory(name);
-            fetchFullData(owmLoc.lat, owmLoc.lon, name, hierarchyText);
-            return;
-        }
-
-        alert(`Place "${query}" not found! Try searching nearby District or Tehsil name.`);
+        alert(`Place "${query}" not found! Try searching another city.`);
     } catch (error) {
         console.error("Search Error:", error);
     }
@@ -283,17 +263,77 @@ async function universalSearch(query) {
 
 async function fetchFullData(lat, lon, displayName, hierarchyText) {
     try {
-        const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
-        const res = await fetch(weatherUrl);
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,cloud_cover&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,sunrise,sunset&timezone=auto`;
+        
+        const res = await fetch(url);
         const data = await res.json();
 
-        data.customDisplayName = displayName;
-        data.customHierarchy = hierarchyText;
+        if (!data.current || !data.daily) return;
 
+        globalWeeklyData = data.daily;
+        globalHourlyData = data.hourly;
         selectedDayIndex = 0;
-        updateUI(data);
+
+        currentTempC = data.current.temperature_2m;
+        currentFeelsC = data.current.apparent_temperature;
+        currentMinTempC = data.daily.temperature_2m_min[0];
+        currentMaxTempC = data.daily.temperature_2m_max[0];
+
+        const placeNameEl = document.getElementById("place-name");
+        const hierarchyEl = document.getElementById("place-hierarchy");
+        const tempEl = document.getElementById("temperature");
+        const feelsLikeEl = document.getElementById("feels-like");
+        const weatherDescEl = document.getElementById("weather-desc");
+        const weatherIconEl = document.getElementById("weather-icon");
+        const windSpeedEl = document.getElementById("wind-speed");
+        const windDirectionEl = document.getElementById("wind-direction");
+        const sunriseTimeEl = document.getElementById("sunrise-time");
+        const sunsetTimeEl = document.getElementById("sunset-time");
+        const humidityValEl = document.getElementById("humidity-val");
+        const pressureValEl = document.getElementById("pressure-val");
+        const visibilityValEl = document.getElementById("visibility-val");
+        const cloudCoverEl = document.getElementById("cloud-cover");
+        const dewPointEl = document.getElementById("dew-point");
+        const badgeEl = document.getElementById("selected-day-badge");
+
+        if (badgeEl) badgeEl.innerText = "Showing: Today (Live)";
+        if (placeNameEl) placeNameEl.innerText = displayName;
+        if (hierarchyEl) hierarchyEl.innerText = hierarchyText;
+        if (tempEl) tempEl.innerText = convertTemp(currentTempC);
+        if (feelsLikeEl) feelsLikeEl.innerText = convertTemp(currentFeelsC);
+
+        const cond = getWeatherCondition(data.current.weather_code);
+        if (weatherDescEl) weatherDescEl.innerText = cond.text;
+        if (weatherIconEl) weatherIconEl.src = `https://openweathermap.org/img/wn/${cond.icon}@2x.png`;
+
+        if (humidityValEl) humidityValEl.innerText = data.current.relative_humidity_2m;
+        if (pressureValEl) pressureValEl.innerText = Math.round(data.current.surface_pressure);
+        if (visibilityValEl) visibilityValEl.innerText = "10.0";
+        if (cloudCoverEl) cloudCoverEl.innerText = `${data.current.cloud_cover}%`;
+
+        if (windSpeedEl) windSpeedEl.innerText = Math.round(data.current.wind_speed_10m);
+        if (windDirectionEl) windDirectionEl.innerText = getCompassDirection(data.current.wind_direction_10m);
+
+        const dew = Math.round(currentTempC - ((100 - data.current.relative_humidity_2m) / 5));
+        if (dewPointEl) dewPointEl.innerText = `${dew}°C`;
+
+        if (sunriseTimeEl && data.daily.sunrise && data.daily.sunrise[0]) {
+            sunriseTimeEl.innerText = data.daily.sunrise[0].slice(11, 16);
+        }
+        if (sunsetTimeEl && data.daily.sunset && data.daily.sunset[0]) {
+            sunsetTimeEl.innerText = data.daily.sunset[0].slice(11, 16);
+        }
+
+        updateMinMaxDisplay();
+        applyWeatherTheme(data.current.weather_code);
+
+        const todayUv = data.daily.uv_index_max ? data.daily.uv_index_max[0] : 0;
+        updateUvIndex(todayUv);
+        updateRainSection(data.daily.precipitation_probability_max[0] || 0, data.daily.precipitation_sum[0] || 0);
+
+        renderHourlyTimeline();
+        renderForecastCards();
         fetchAirQuality(lat, lon);
-        fetchDeepTelemetryAndForecast(lat, lon);
     } catch (error) {
         console.error("Data Fetch Error:", error);
     }
@@ -301,7 +341,7 @@ async function fetchFullData(lat, lon, displayName, hierarchyText) {
 
 async function fetchAirQuality(lat, lon) {
     try {
-        const aqiUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
+        const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,us_aqi`;
         const res = await fetch(aqiUrl);
         const aqiData = await res.json();
 
@@ -309,59 +349,26 @@ async function fetchAirQuality(lat, lon) {
         const aqiLabelEl = document.getElementById("aqi-label");
         const aqiAdviceEl = document.getElementById("aqi-advice");
 
-        if (aqiData.list && aqiData.list.length > 0) {
-            const aqiIndex = aqiData.list[0].main.aqi;
-            const pm25 = Math.round(aqiData.list[0].components.pm2_5);
-
+        if (aqiData.current) {
+            const pm25 = Math.round(aqiData.current.pm2_5 || 25);
             if (aqiValueEl) aqiValueEl.innerText = pm25;
 
-            const aqiMap = {
-                1: { text: "GOOD", advice: "Air is clean & fresh. Great for outdoor walks.", color: "#16a34a", bg: "rgba(56, 239, 125, 0.2)" },
-                2: { text: "FAIR", advice: "Air quality is normal & acceptable.", color: "#16a34a", bg: "rgba(168, 255, 120, 0.2)" },
-                3: { text: "MODERATE", advice: "Moderate air. Sensitive individuals take care.", color: "#ca8a04", bg: "rgba(255, 215, 0, 0.2)" },
-                4: { text: "POOR", advice: "Unhealthy air. Avoid heavy outdoor exercises.", color: "#ea580c", bg: "rgba(255, 165, 0, 0.2)" },
-                5: { text: "VERY POOR", advice: "Hazardous air quality. Wear a mask outdoors.", color: "#dc2626", bg: "rgba(255, 69, 0, 0.2)" }
-            };
-
-            const currentAqi = aqiMap[aqiIndex] || aqiMap[1];
-            if (aqiLabelEl) {
-                aqiLabelEl.innerText = currentAqi.text;
-                aqiLabelEl.style.color = currentAqi.color;
-                aqiLabelEl.style.backgroundColor = currentAqi.bg;
+            if (pm25 <= 30) {
+                if (aqiLabelEl) { aqiLabelEl.innerText = "GOOD"; aqiLabelEl.style.color = "#16a34a"; aqiLabelEl.style.background = "rgba(56, 239, 125, 0.2)"; }
+                if (aqiAdviceEl) aqiAdviceEl.innerText = "Air is clean & fresh. Great for outdoor walks.";
+            } else if (pm25 <= 60) {
+                if (aqiLabelEl) { aqiLabelEl.innerText = "FAIR"; aqiLabelEl.style.color = "#16a34a"; aqiLabelEl.style.background = "rgba(168, 255, 120, 0.2)"; }
+                if (aqiAdviceEl) aqiAdviceEl.innerText = "Air quality is acceptable.";
+            } else if (pm25 <= 90) {
+                if (aqiLabelEl) { aqiLabelEl.innerText = "MODERATE"; aqiLabelEl.style.color = "#ca8a04"; aqiLabelEl.style.background = "rgba(255, 215, 0, 0.2)"; }
+                if (aqiAdviceEl) aqiAdviceEl.innerText = "Sensitive individuals take care.";
+            } else {
+                if (aqiLabelEl) { aqiLabelEl.innerText = "POOR"; aqiLabelEl.style.color = "#dc2626"; aqiLabelEl.style.background = "rgba(255, 69, 0, 0.2)"; }
+                if (aqiAdviceEl) aqiAdviceEl.innerText = "Unhealthy air. Avoid heavy outdoor exercises.";
             }
-            if (aqiAdviceEl) aqiAdviceEl.innerText = currentAqi.advice;
         }
     } catch (err) {
         console.error("AQI error:", err);
-    }
-}
-
-async function fetchDeepTelemetryAndForecast(lat, lon) {
-    try {
-        const deepUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&timezone=auto`;
-        const res = await fetch(deepUrl);
-        const data = await res.json();
-        
-        if (!data.daily || !data.hourly) return;
-        globalWeeklyData = data.daily;
-        globalHourlyData = data.hourly;
-
-        renderHourlyTimeline();
-        renderForecastCards();
-
-        currentMinTempC = globalWeeklyData.temperature_2m_min[0];
-        currentMaxTempC = globalWeeklyData.temperature_2m_max[0];
-        updateMinMaxDisplay();
-
-        const todayWeatherCode = globalWeeklyData.weathercode[0];
-        applyWeatherTheme(todayWeatherCode);
-
-        const todayUv = globalWeeklyData.uv_index_max ? globalWeeklyData.uv_index_max[0] : 0;
-        updateUvIndex(todayUv);
-
-        updateRainSection(globalWeeklyData.precipitation_probability_max[0], globalWeeklyData.precipitation_sum[0]);
-    } catch (err) {
-        console.error("Telemetry fetch error:", err);
     }
 }
 
@@ -380,7 +387,9 @@ function renderHourlyTimeline() {
         const timeObj = new Date(globalHourlyData.time[i]);
         const hourLabel = i === startIndex ? "Now" : timeObj.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
         const temp = convertTemp(globalHourlyData.temperature_2m[i]);
-        const code = globalHourlyData.weathercode[i];
+        const code = (globalHourlyData.weather_code && globalHourlyData.weather_code[i] !== undefined) 
+            ? globalHourlyData.weather_code[i] 
+            : (globalHourlyData.weathercode ? globalHourlyData.weathercode[i] : 0);
         const cond = getWeatherCondition(code);
         const rainChance = globalHourlyData.precipitation_probability ? globalHourlyData.precipitation_probability[i] : 0;
 
@@ -408,8 +417,8 @@ function updateUvIndex(uvVal) {
     const uvBarEl = document.getElementById("uv-bar");
     const uvRiskEl = document.getElementById("uv-risk");
 
-    if (uvEl) uvEl.innerText = uvVal.toFixed(1);
-    if (uvBarEl) uvBarEl.style.width = `${Math.min((uvVal / 11) * 100, 100)}%`;
+    if (uvEl) uvEl.innerText = uvVal ? uvVal.toFixed(1) : "0.0";
+    if (uvBarEl) uvBarEl.style.width = `${Math.min(((uvVal || 0) / 11) * 100, 100)}%`;
 
     if (uvRiskEl) {
         if (uvVal >= 8) {
@@ -436,7 +445,9 @@ function renderForecastCards() {
         const dayName = i === 0 ? "Today" : date.toLocaleDateString("en-US", { weekday: "short" });
         const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
         const maxTemp = convertTemp(globalWeeklyData.temperature_2m_max[i]);
-        const weatherCode = globalWeeklyData.weathercode[i];
+        const weatherCode = (globalWeeklyData.weather_code && globalWeeklyData.weather_code[i] !== undefined)
+            ? globalWeeklyData.weather_code[i]
+            : (globalWeeklyData.weathercode ? globalWeeklyData.weathercode[i] : 0);
         const condition = getWeatherCondition(weatherCode);
         const rainProb = globalWeeklyData.precipitation_probability_max ? globalWeeklyData.precipitation_probability_max[i] : 0;
 
@@ -479,15 +490,18 @@ function selectDayForecast(dayIndex) {
     currentMaxTempC = globalWeeklyData.temperature_2m_max[dayIndex];
     updateMinMaxDisplay();
 
-    const condition = getWeatherCondition(globalWeeklyData.weathercode[dayIndex]);
-    applyWeatherTheme(globalWeeklyData.weathercode[dayIndex]);
+    const weatherCode = (globalWeeklyData.weather_code && globalWeeklyData.weather_code[dayIndex] !== undefined)
+        ? globalWeeklyData.weather_code[dayIndex]
+        : (globalWeeklyData.weathercode ? globalWeeklyData.weathercode[dayIndex] : 0);
+    const condition = getWeatherCondition(weatherCode);
+    applyWeatherTheme(weatherCode);
 
     if (tempEl) tempEl.innerText = convertTemp(currentTempC);
     if (descEl) descEl.innerText = condition.text;
     if (iconEl) iconEl.src = `https://openweathermap.org/img/wn/${condition.icon}@2x.png`;
 
-    const rainProb = globalWeeklyData.precipitation_probability_max[dayIndex] || 0;
-    const rainSum = globalWeeklyData.precipitation_sum[dayIndex] || 0;
+    const rainProb = globalWeeklyData.precipitation_probability_max ? globalWeeklyData.precipitation_probability_max[dayIndex] : 0;
+    const rainSum = globalWeeklyData.precipitation_sum ? globalWeeklyData.precipitation_sum[dayIndex] : 0;
     updateRainSection(rainProb, rainSum);
 
     const uv = globalWeeklyData.uv_index_max ? globalWeeklyData.uv_index_max[dayIndex] : 0;
@@ -520,63 +534,6 @@ function updateRainSection(rainChance, rainAmount) {
             rainBadgeEl.innerText = "☀️ No Rain Expected";
             rainBadgeEl.className = "rain-status-badge rain-no";
         }
-    }
-}
-
-function updateUI(data) {
-    const placeNameEl = document.getElementById("place-name");
-    const hierarchyEl = document.getElementById("place-hierarchy");
-    const tempEl = document.getElementById("temperature");
-    const weatherDescEl = document.getElementById("weather-desc");
-    const weatherIconEl = document.getElementById("weather-icon");
-    const windSpeedEl = document.getElementById("wind-speed");
-    const windDirectionEl = document.getElementById("wind-direction");
-    const sunriseTimeEl = document.getElementById("sunrise-time");
-    const sunsetTimeEl = document.getElementById("sunset-time");
-    const feelsLikeEl = document.getElementById("feels-like");
-    const humidityValEl = document.getElementById("humidity-val");
-    const pressureValEl = document.getElementById("pressure-val");
-    const visibilityValEl = document.getElementById("visibility-val");
-    const cloudCoverEl = document.getElementById("cloud-cover");
-    const dewPointEl = document.getElementById("dew-point");
-    const badgeEl = document.getElementById("selected-day-badge");
-
-    if (badgeEl) badgeEl.innerText = "Showing: Today (Live)";
-    if (placeNameEl) placeNameEl.innerText = data.customDisplayName || data.name;
-    if (hierarchyEl) hierarchyEl.innerText = data.customHierarchy || (data.sys ? `${data.sys.country}` : "");
-
-    currentTempC = data.main.temp;
-    currentFeelsC = data.main.feels_like;
-    if (tempEl) tempEl.innerText = convertTemp(currentTempC);
-    if (feelsLikeEl) feelsLikeEl.innerText = convertTemp(currentFeelsC);
-
-    if (humidityValEl) humidityValEl.innerText = data.main.humidity;
-    if (pressureValEl) pressureValEl.innerText = data.main.pressure;
-    if (visibilityValEl) visibilityValEl.innerText = (data.visibility / 1000).toFixed(1);
-    if (cloudCoverEl && data.clouds) cloudCoverEl.innerText = `${data.clouds.all}%`;
-
-    const temp = data.main.temp;
-    const hum = data.main.humidity;
-    const dewPoint = Math.round(temp - ((100 - hum) / 5));
-    if (dewPointEl) dewPointEl.innerText = `${dewPoint}°C`;
-
-    if (weatherDescEl && data.weather && data.weather.length > 0) {
-        weatherDescEl.innerText = data.weather[0].description;
-    }
-    if (weatherIconEl && data.weather && data.weather.length > 0) {
-        weatherIconEl.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-    }
-
-    if (windSpeedEl && data.wind) {
-        windSpeedEl.innerText = Math.round(data.wind.speed * 3.6);
-    }
-    if (windDirectionEl && data.wind) {
-        windDirectionEl.innerText = getCompassDirection(data.wind.deg);
-    }
-
-    if (data.sys && data.timezone !== undefined) {
-        if (sunriseTimeEl) sunriseTimeEl.innerText = formatSunTime(data.sys.sunrise, data.timezone);
-        if (sunsetTimeEl) sunsetTimeEl.innerText = formatSunTime(data.sys.sunset, data.timezone);
     }
 }
 
