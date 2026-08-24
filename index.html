@@ -615,7 +615,6 @@
             font-weight: bold;
         }
 
-        /* Direct Device Simulated SMS Toast */
         .phone-sms-toast {
             position: fixed;
             top: 20px;
@@ -654,7 +653,6 @@
             margin-top: 2px;
         }
 
-        /* Clean Login Modal */
         .auth-overlay {
             position: fixed;
             top: 0;
@@ -800,7 +798,6 @@
 </head>
 <body>
 
-<!-- Device SMS Message Toast Popup -->
 <div id="sms-toast" class="phone-sms-toast" style="display: none;">
     <div class="sms-icon">💬</div>
     <div class="sms-body">
@@ -809,7 +806,6 @@
     </div>
 </div>
 
-<!-- Clean Login Modal -->
 <div id="auth-modal" class="auth-overlay" style="display: none;">
     <div class="auth-card">
         <div class="auth-header">
@@ -828,7 +824,6 @@
             <p id="auth-subtitle">Enter your mobile number to get an OTP</p>
         </div>
 
-        <!-- Direct Phone Number OTP Login Form -->
         <form id="otp-form" class="auth-form">
             <div class="auth-input-group">
                 <label>Mobile Number</label>
@@ -838,7 +833,6 @@
                 </div>
             </div>
 
-            <!-- Automatically Revealed on OTP Send -->
             <div class="auth-input-group" id="otp-code-group" style="display: none;">
                 <label style="color: var(--accent-blue); font-weight: 600;">Enter 4-Digit OTP</label>
                 <input type="text" id="otp-code-input" placeholder="Enter OTP here" maxlength="4" autocomplete="off" />
@@ -1020,6 +1014,6 @@
     </div>
 </div>
 
-<script src="script.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
