@@ -7,13 +7,13 @@
 
     <!-- Google SEO Meta Tags -->
     <meta name="description" content="ATMOS LIVE - Accurate real-time global weather platform, 24-hour hourly forecast, precipitation radar, and air quality index telemetry.">
-    <meta name="keywords" content="Atmos Weather, Live Weather Forecast, Delhi Weather, 7 Day Forecast, Air Quality Index, Hourly Forecast">
+    <meta name="keywords" content="Atmos Weather, Live Weather Forecast, Delhi Weather, 7 Day Forecast, Air Quality Index, Hourly Forecast, World Temperature">
     <meta name="author" content="Himanshu">
     <meta name="robots" content="index, follow">
 
-    <!-- Open Graph (WhatsApp, LinkedIn, Twitter Preview) -->
+    <!-- Open Graph -->
     <meta property="og:title" content="ATMOS LIVE | Global Weather Platform">
-    <meta property="og:description" content="Check real-time weather, 24-hour forecast, and live air quality telemetry.">
+    <meta property="og:description" content="Check real-time weather, 24-hour forecast, world temperatures, and live air quality telemetry.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://himanshu8833.github.io/atmos-weather/">
 
@@ -177,21 +177,6 @@
             font-weight: 500;
             letter-spacing: 0.5px;
             backdrop-filter: blur(10px);
-        }
-
-        .header-clock .clock-date {
-            color: var(--text-white);
-        }
-
-        .header-clock .clock-dot {
-            color: var(--accent-blue);
-            font-size: 10px;
-        }
-
-        .header-clock .clock-time {
-            color: var(--accent-blue);
-            font-family: 'Consolas', monospace;
-            font-weight: 600;
         }
 
         .header-actions {
@@ -371,6 +356,77 @@
             color: var(--text-grey);
             margin-top: 4px;
             font-weight: 500;
+        }
+
+        /* World Weather Section Styling */
+        .world-section {
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: var(--panel-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(16px);
+        }
+
+        .world-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .world-card {
+            background: var(--card-bg);
+            border: var(--panel-border);
+            border-radius: 14px;
+            padding: 12px 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .world-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            background: var(--badge-bg);
+            box-shadow: 0 6px 20px rgba(50, 208, 238, 0.2);
+        }
+
+        .world-card .world-city-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        .world-card .world-country-code {
+            font-size: 10px;
+            color: var(--text-grey);
+            text-transform: uppercase;
+        }
+
+        .world-card img {
+            width: 38px;
+            height: 38px;
+        }
+
+        .world-card .world-temp {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+
+        .world-card .world-condition {
+            font-size: 10px;
+            color: var(--text-grey);
+            text-transform: capitalize;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 90px;
         }
 
         .hourly-section {
@@ -651,21 +707,9 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        .phone-sms-toast .sms-icon {
-            font-size: 24px;
-        }
-
-        .phone-sms-toast .sms-body h4 {
-            font-size: 13px;
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .phone-sms-toast .sms-body p {
-            font-size: 12px;
-            color: var(--accent-green);
-            margin-top: 2px;
-        }
+        .phone-sms-toast .sms-icon { font-size: 24px; }
+        .phone-sms-toast .sms-body h4 { font-size: 13px; color: #ffffff; font-weight: 600; }
+        .phone-sms-toast .sms-body p { font-size: 12px; color: var(--accent-green); margin-top: 2px; }
 
         .auth-overlay {
             position: fixed;
@@ -912,6 +956,15 @@
             <img id="weather-icon" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather Icon" />
             <div class="hero-min-max">Min: <span id="temp-min">--</span>° • Max: <span id="temp-max">--</span>°</div>
         </div>
+    </div>
+
+    <!-- NEW: Global Major Cities Live Temperature Tracker -->
+    <div class="world-section">
+        <div class="section-header-title">
+            <span>🌍 GLOBAL CITIES LIVE TEMPERATURE</span>
+            <span style="font-size: 11px; color: var(--accent-blue);">💡 Click any city to load telemetry</span>
+        </div>
+        <div class="world-grid" id="world-cities-container"></div>
     </div>
 
     <div class="hourly-section">
