@@ -186,6 +186,13 @@
             flex-wrap: wrap;
         }
 
+        /* Search & Autocomplete Dropdown Styling */
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
         .search-box {
             display: flex;
             gap: 8px;
@@ -199,7 +206,7 @@
             border-radius: 8px;
             outline: none;
             font-size: 14px;
-            width: 200px;
+            width: 220px;
             backdrop-filter: blur(10px);
         }
 
@@ -212,6 +219,55 @@
             font-weight: bold;
             color: #ffffff;
             transition: 0.2s;
+        }
+
+        .search-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 280px;
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-white);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: var(--badge-bg);
+        }
+
+        .dropdown-item .item-main {
+            font-weight: 600;
+        }
+
+        .dropdown-item .item-sub {
+            font-size: 11px;
+            color: var(--text-grey);
         }
 
         .action-btn {
@@ -254,6 +310,7 @@
             margin-left: 4px;
         }
 
+        /* Recent Searches with Delete Buttons */
         .recent-searches-box {
             display: flex;
             align-items: center;
@@ -268,6 +325,7 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .chip {
@@ -277,14 +335,42 @@
             border-radius: 14px;
             font-size: 12px;
             color: var(--text-white);
-            cursor: pointer;
             transition: 0.2s;
             backdrop-filter: blur(10px);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .chip:hover {
-            background: var(--accent-blue);
-            color: #ffffff;
+        .chip-name {
+            cursor: pointer;
+        }
+
+        .chip-remove-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-grey);
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chip-remove-btn:hover {
+            color: #ef4444;
+        }
+
+        .clear-history-btn {
+            background: transparent;
+            border: none;
+            color: var(--accent-orange);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-left: 4px;
         }
 
         .weather-hero {
@@ -358,7 +444,6 @@
             font-weight: 500;
         }
 
-        /* World Weather Section Styling */
         .world-section {
             background-color: var(--panel-bg);
             border-radius: 20px;
@@ -923,11 +1008,17 @@
             </div>
             <div id="live-clock" class="header-clock">Loading live time...</div>
         </div>
+        
         <div class="header-actions">
-            <div class="search-box">
-                <input type="text" id="city-input" placeholder="Search City, District..." />
-                <button id="search-btn">Search</button>
+            <!-- Search wrapper with Auto-complete Dropdown -->
+            <div class="search-wrapper">
+                <div class="search-box">
+                    <input type="text" id="city-input" placeholder="Search City, Village, Town..." autocomplete="off" />
+                    <button id="search-btn">Search</button>
+                </div>
+                <div id="search-dropdown" class="search-dropdown"></div>
             </div>
+
             <button id="geo-btn" class="action-btn" title="Use current location">📍</button>
             <button id="unit-toggle-btn" class="action-btn" title="Switch °C/°F">°F</button>
             <button id="theme-toggle-btn" class="action-btn" title="Toggle Dark/Light Mode">🌙</button>
@@ -939,6 +1030,7 @@
         </div>
     </div>
 
+    <!-- Recent Searches with Delete capability -->
     <div class="recent-searches-box">
         <span>Recent:</span>
         <div id="recent-chips" class="recent-chips-container"></div>
@@ -958,7 +1050,7 @@
         </div>
     </div>
 
-    <!-- NEW: Global Major Cities Live Temperature Tracker -->
+    <!-- Global Major Cities Live Temperature Tracker -->
     <div class="world-section">
         <div class="section-header-title">
             <span>🌍 GLOBAL CITIES LIVE TEMPERATURE</span>
@@ -1082,5 +1174,177 @@
 </div>
 
 <script src="app.js"></script>
+
+<!-- Embedded Logic for Dropdown & History Management -->
+<script>
+    // Search history storage
+    let recentSearches = JSON.parse(localStorage.getItem('atmos_recent_searches')) || ['Delhi', 'Mumbai', 'Bengaluru'];
+
+    function renderRecentSearches() {
+        const container = document.getElementById('recent-chips');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (recentSearches.length === 0) {
+            container.innerHTML = '<span style="color: var(--text-grey); font-size: 11px;">No recent searches</span>';
+            return;
+        }
+
+        recentSearches.forEach((city) => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'chip-name';
+            nameSpan.textContent = city;
+            nameSpan.addEventListener('click', () => {
+                document.getElementById('city-input').value = city;
+                if (typeof fetchWeatherByCity === 'function') {
+                    fetchWeatherByCity(city);
+                } else {
+                    const searchBtn = document.getElementById('search-btn');
+                    if (searchBtn) searchBtn.click();
+                }
+            });
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'chip-remove-btn';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.title = 'Remove ' + city;
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeRecentSearch(city);
+            });
+
+            chip.appendChild(nameSpan);
+            chip.appendChild(removeBtn);
+            container.appendChild(chip);
+        });
+
+        // Clear All History Button
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'clear-history-btn';
+        clearBtn.textContent = 'Clear All';
+        clearBtn.addEventListener('click', clearAllSearches);
+        container.appendChild(clearBtn);
+    }
+
+    function addRecentSearch(cityName) {
+        if (!cityName) return;
+        recentSearches = recentSearches.filter(item => item.toLowerCase() !== cityName.toLowerCase());
+        recentSearches.unshift(cityName);
+        if (recentSearches.length > 6) recentSearches.pop();
+        localStorage.setItem('atmos_recent_searches', JSON.stringify(recentSearches));
+        renderRecentSearches();
+    }
+
+    function removeRecentSearch(cityName) {
+        recentSearches = recentSearches.filter(item => item.toLowerCase() !== cityName.toLowerCase());
+        localStorage.setItem('atmos_recent_searches', JSON.stringify(recentSearches));
+        renderRecentSearches();
+    }
+
+    function clearAllSearches() {
+        recentSearches = [];
+        localStorage.removeItem('atmos_recent_searches');
+        renderRecentSearches();
+    }
+
+    // Geocoding Autocomplete Dropdown Logic
+    const cityInput = document.getElementById('city-input');
+    const searchDropdown = document.getElementById('search-dropdown');
+    let debounceTimer;
+
+    cityInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (query.length < 2) {
+            searchDropdown.classList.remove('show');
+            searchDropdown.innerHTML = '';
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            fetchLocationSuggestions(query);
+        }, 280);
+    });
+
+    async function fetchLocationSuggestions(query) {
+        try {
+            const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=en&format=json`);
+            const data = await response.json();
+
+            searchDropdown.innerHTML = '';
+
+            if (!data.results || data.results.length === 0) {
+                searchDropdown.innerHTML = `<div class="dropdown-item" style="cursor: default;"><span class="item-main">No locations found</span></div>`;
+                searchDropdown.classList.add('show');
+                return;
+            }
+
+            data.results.forEach((loc) => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+
+                const stateInfo = loc.admin1 ? `${loc.admin1}, ` : '';
+                const countryInfo = loc.country || '';
+
+                item.innerHTML = `
+                    <span class="item-main">${loc.name}</span>
+                    <span class="item-sub">${stateInfo}${countryInfo}</span>
+                `;
+
+                item.addEventListener('click', () => {
+                    cityInput.value = loc.name;
+                    searchDropdown.classList.remove('show');
+                    addRecentSearch(loc.name);
+
+                    if (typeof fetchWeatherByCoords === 'function') {
+                        fetchWeatherByCoords(loc.latitude, loc.longitude, loc.name, `${stateInfo}${countryInfo}`);
+                    } else if (typeof fetchWeatherByCity === 'function') {
+                        fetchWeatherByCity(loc.name);
+                    } else {
+                        const searchBtn = document.getElementById('search-btn');
+                        if (searchBtn) searchBtn.click();
+                    }
+                });
+
+                searchDropdown.appendChild(item);
+            });
+
+            searchDropdown.classList.add('show');
+        } catch (err) {
+            console.error('Error fetching suggestions:', err);
+        }
+    }
+
+    // Close Dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrapper')) {
+            searchDropdown.classList.remove('show');
+        }
+    });
+
+    // Enter key press event
+    cityInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            searchDropdown.classList.remove('show');
+            const val = cityInput.value.trim();
+            if (val) {
+                addRecentSearch(val);
+                if (typeof fetchWeatherByCity === 'function') {
+                    fetchWeatherByCity(val);
+                }
+            }
+        }
+    });
+
+    // Initial render
+    document.addEventListener('DOMContentLoaded', () => {
+        renderRecentSearches();
+    });
+</script>
 </body>
 </html>
